@@ -6,6 +6,8 @@ import UsersController from '../controllers/UsersController';
 
 import AuthController from '../controllers/AuthController';
 
+import FilesController from '../controllers/FilesController';
+
 const routter = Router();
 
 routter.get('/status', AppController.getStatus);

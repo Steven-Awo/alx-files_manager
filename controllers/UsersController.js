@@ -60,6 +60,42 @@ class UsersController {
     });
   }
 
+  static async getMe(request, response) {
+
+    const tokenN = request.header('X-Token');
+
+    const keyY = `auth_${tokenN}`;
+
+    const userrId = await redisClient.get(keyY);
+
+    if (userrId) {
+
+      const userrs = dbClient.db.collection('userrs');
+
+      const idObject = new ObjectID(userrId);
+
+      userrs.findOne({ _id: idObject }, (err, user) => {
+
+        if (user) {
+
+          response.status(200).json({ id: userrId, email: user.email });
+
+        } else {
+
+          response.status(401).json({ error: 'Unauthorized' });
+
+        }
+      });
+
+    } else {
+
+      console.log('Hupatikani!');
+
+      response.status(401).json({ error: 'Unauthorized' });
+
+    }
+  }
+
 }
 
 module.exports = UsersController;

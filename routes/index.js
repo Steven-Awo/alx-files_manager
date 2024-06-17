@@ -20,4 +20,6 @@ routter.get('/disconnect', AuthController.getDisconnect);
 
 routter.get('/users/me', UsersController.getMe);
 
+routter.post('/files', FilesController.postUpload);
+
 module.exports = routter;

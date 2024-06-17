@@ -175,6 +175,100 @@ class FilesController {
     return null;
   }
 
+  static async getShow(request, response) {
+
+    const userr = await FilesController.getUser(request);
+
+    if (!userr) {
+
+      return response.status(401).json({ error: 'Unauthorized' });
+
+    }
+
+    const fileId = request.params.id;
+
+    const filles = dbClient.db.collection('files');
+
+    const id_Object = new ObjectID(fileId);
+
+    const filee = await filles.findOne({ _id: id_Object, userId: userr._id });
+
+    if (!filee) {
+
+      return response.status(404).json({ error: 'Not found' });
+
+    }
+
+    return response.status(200).json(filee);
+  }
+
+  static async getIndex(request, response) {
+
+    const userr = await FilesController.getUser(request);
+
+    if (!userr) {
+
+      return response.status(401).json({ error: 'Unauthorized' });
+
+    }
+
+    const {
+      parentId,
+      page,
+    } = request.query;
+
+    const pageNum = page || 0;
+
+    const filles = dbClient.db.collection('files');
+
+    let query;
+
+    if (!parentId) {
+
+      query = { userId: userr._id };
+    } else {
+      query = { userId: userr._id, parentId: ObjectID(parentId) };
+    }
+    filles.aggregate(
+      [
+        { $match: query },
+        { $sort: { _id: -1 } },
+        {
+          $facet: {
+            metadata: [{ $count: 'total' }, { $addFields: { page: parseInt(pageNum, 10) } }],
+            data: [{ $skip: 20 * parseInt(pageNum, 10) }, { $limit: 20 }],
+          },
+        },
+      ],
+    ).toArray((err, result) => {
+
+      if (result) {
+
+        const final = result[0].data.map((filee) => {
+
+          const tmpFile = {
+
+            ...filee,
+            id: filee._id,
+          };
+          delete tmpFile._id;
+
+          delete tmpFile.localPath;
+
+          return tmpFile;
+
+        });
+        // console.log(final);
+        return response.status(200).json(final);
+      }
+
+      console.log('Error occured');
+
+      return response.status(404).json({ error: 'Not found' });
+
+    });
+    return null;
+  }
 }
 
 module.exports = FilesController;

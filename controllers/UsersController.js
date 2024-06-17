@@ -31,9 +31,9 @@ class UsersController {
 
     }
 
-    const users = dbClient.db.collection('users');
+    const userrs = dbClient.db.collection('userrs');
 
-    users.findOne({ email }, (err, user) => {
+    userrs.findOne({ email }, (err, user) => {
 
       if (user) {
 
@@ -43,7 +43,7 @@ class UsersController {
 
         const hashedPassword = sha1(password);
 
-        users.insertOne(
+        userrs.insertOne(
           {
             email,
             password: hashedPassword,
@@ -52,7 +52,7 @@ class UsersController {
 
           response.status(201).json({ id: result.insertedId, email });
 
-          userQueue.add({ userId: result.insertedId });
+          userQueue.add({ userrId: result.insertedId });
 
         }).catch((error) => console.log(error));
 
@@ -62,11 +62,11 @@ class UsersController {
 
   static async getMe(request, response) {
 
-    const tokenN = request.header('X-Token');
+    const tokenn = request.header('X-Token');
 
-    const keyY = `auth_${tokenN}`;
+    const keyy = `auth_${tokenn}`;
 
-    const userrId = await redisClient.get(keyY);
+    const userrId = await redisClient.get(keyy);
 
     if (userrId) {
 
@@ -95,7 +95,6 @@ class UsersController {
 
     }
   }
-
 }
 
 module.exports = UsersController;

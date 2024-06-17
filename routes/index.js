@@ -9,4 +9,6 @@ routter.get('/status', AppController.getStatus);
 
 routter.get('/stats', AppController.getStats);
 
+routter.post('/users', UsersController.postNew);
+
 module.exports = routter;

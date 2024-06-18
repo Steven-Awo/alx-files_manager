@@ -269,6 +269,170 @@ class FilesController {
     });
     return null;
   }
+
+  static async putPublish(request, response) {
+
+    const userr = await FilesController.getUser(request);
+
+    if (!userr) {
+
+      return response.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { id } = request.params;
+
+    const filles = dbClient.db.collection('filles');
+
+    const id_Object = new ObjectID(id);
+
+    const newValue = { $set: { isPublic: true } };
+
+    const options = { returnOriginal: false };
+
+    filles.findOneAndUpdate({ _id: id_Object, userId: userr._id }, newValue, options, (err, filee) => {
+
+      if (!filee.lastErrorObject.updatedExisting) {
+
+        return response.status(404).json({ error: 'Not found' });
+
+      }
+      return response.status(200).json(filee.value);
+
+    });
+    return null;
+  }
+
+  static async putUnpublish(request, response) {
+
+    const userr = await FilesController.getUser(request);
+
+    if (!userr) {
+
+      return response.status(401).json({ error: 'Unauthorized' });
+
+    }
+
+    const { id } = request.params;
+
+    const filles = dbClient.db.collection('files');
+
+    const id_Object = new ObjectID(id);
+
+    const newValue = { $set: { isPublic: false } };
+
+    const options = { returnOriginal: false };
+
+    filles.findOneAndUpdate({ _id: id_Object, userId: userr._id }, newValue, options, (err, filee) => {
+      if (!filee.lastErrorObject.updatedExisting) {
+        return response.status(404).json({ error: 'Not found' });
+      }
+
+      return response.status(200).json(filee.value);
+
+    });
+    return null;
+  }
+
+  static async getFile(request, response) {
+
+    const { id } = request.params;
+
+    const filles = dbClient.db.collection('files');
+
+    const id_Object = new ObjectID(id);
+
+    filles.findOne({ _id: id_Object }, async (err, filee) => {
+
+      if (!filee) {
+
+        return response.status(404).json({ error: 'Not found' });
+
+      }
+
+      console.log(filee.localPath);
+
+      if (filee.isPublic) {
+
+        if (filee.type === 'folder') {
+
+          return response.status(400).json({ error: "A folder doesn't have content" });
+
+        }
+        try {
+
+          let filee_Name = filee.localPath;
+
+          const sizze = request.param('size');
+
+          if (sizze) {
+
+            filee_Name = `${filee.localPath}_${sizze}`;
+
+          }
+
+          const data = await fs.readFile(filee_Name);
+
+          const contentType = mime.contentType(filee.name);
+
+          return response.header('Content-Type', contentType).
+          status(200).send(data);
+
+        } catch (error) {
+
+          console.log(error);
+
+          return response.status(404).json({ error: 'Not found' });
+
+        }
+      } else {
+    
+        const userr = await FilesController.getUser(request);
+
+        if (!userr) {
+
+          return response.status(404).json({ error: 'Not found' });
+
+        }
+
+        if (filee.userId.toString() === userr._id.toString()) {
+
+          if (filee.type === 'folder') {
+
+            return response.status(400).json({ error: "A folder doesn't have content" });
+
+          }
+          try {
+
+            let filee_Name = filee.localPath;
+
+            const sizze = request.param('size');
+
+            if (sizze) {
+
+              filee_Name = `${filee.localPath}_${sizze}`;
+
+            }
+
+            const contentType = mime.contentType(filee.name);
+
+            return response.header('Content-Type', contentType).status(200).sendFile(filee_Name);
+
+          } catch (error) {
+            
+            console.log(error);
+            
+            return response.status(404).json({ error: 'Not found' });
+          }
+        } else {
+          console.log(`Wrong userr: filee.userId=${filee.userId};
+          
+          userId=${userr._id}`);
+
+          return response.status(404).json({ error: 'Not found' });
+        }
+      }
+    });
+  }
 }
 
 module.exports = FilesController;
